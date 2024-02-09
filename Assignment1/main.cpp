@@ -23,9 +23,13 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
     // Create the model matrix for rotating the triangle around the Z axis.
     // Then return it.
+    float angle = rotation_angle / 180.0 * MY_PI;
+    model << std::cos(angle), -std::sin(angle), 0.0, 0.0,
+           std::sin(angle), std::cos(angle),  0.0, 0.0,
+           0.0,             0.0,              1.0, 0.0,
+           0.0,             0.0,              0.0, 1.0;
 
     return model;
 }
@@ -37,11 +41,56 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
+    Eigen::Matrix4f persp2orth = Eigen::Matrix4f::Identity();
+    persp2orth << zNear, 0.0, 0.0, 0.0,
+                 0.0, zNear, 0.0, 0.0,
+                 0.0, 0.0, zNear + zFar, -(zNear * zFar),
+                 0.0, 0.0, 1.0, 0.0;
+
+    float height = std::tan(eye_fov / 180.0 * MY_PI / 2) * std::abs(zNear) * 2;
+    float width = aspect_ratio * height;
+    // float l = -(width / 2), r = width / 2;
+    // float b = -(height / 2), t = height / 2;
+    Eigen::Matrix4f orth_translate = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f orth_scale = Eigen::Matrix4f::Identity();
+    orth_translate << 1.0, 0.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0, 0.0,
+                      0.0, 0.0, 1.0, -((zNear + zFar) / 2),
+                      0.0, 0.0, 0.0, 1.0;
+    orth_scale << 2.0 / width, 0.0, 0.0, 0.0,
+                   0.0, 2.0 / height, 0.0, 0.0,
+                   0.0, 0.0, 2.0 / (zNear - zFar), 0.0,
+                   0.0, 0.0, 0.0, 1.0;
+    Eigen::Matrix4f orth;
+    orth = orth_scale * orth_translate;
+    projection = orth * persp2orth;
 
     return projection;
+}
+
+Eigen::Matrix4f get_rotation(Vector3f axis, float angle) {
+    Eigen::Matrix4f axis2z = Eigen::Matrix4f::Identity();
+
+    float ang = angle / 180.0 * MY_PI;
+
+    Eigen::Vector3f aZ = axis / std::sqrt(axis.dot(axis)); // 归一化，作为 z 轴
+    Eigen::Vector3f aX = aZ.cross((Eigen::Vector3f){1.0, 0.0, 0.0});
+    Eigen::Vector3f aY = aZ.cross(aX);
+    aX = aX / std::sqrt(aX.dot(aX));
+    aY = aY / std::sqrt(aY.dot(aY));
+
+    Eigen::Matrix4f axis_transform;
+    axis_transform << aX[0], aY[0], aZ[0], 0.0,
+                      aX[1], aY[1], aZ[1], 0.0,
+                      aX[2], aY[2], aZ[2], 0.0,
+                      0.0, 0.0, 0.0, 0.0;
+    
+    Eigen::Matrix4f rotation = axis_transform.inverse()
+                                 * get_model_matrix(angle)
+                                 * axis_transform;
+    return rotation;
 }
 
 int main(int argc, const char** argv)
