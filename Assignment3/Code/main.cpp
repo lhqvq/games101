@@ -78,7 +78,13 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
     orth = orth_scale * orth_translate;
     projection = orth * persp2orth;
 
-    return projection;
+    Eigen::Matrix4f mirror;
+    mirror << -1, 0, 0, 0,
+              0, -1, 0, 0,
+              0, 0, 1, 0,
+              0, 0, 0, 1;
+
+    return mirror * projection;
 }
 
 Eigen::Vector3f vertex_shader(const vertex_shader_payload& payload)
@@ -137,7 +143,8 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
     Eigen::Vector3f normal = payload.normal;
 
     Eigen::Vector3f result_color = {0, 0, 0};
-
+    Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
+    result_color += ambient;
     for (auto& light : lights)
     {
         // For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
@@ -150,9 +157,8 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
 
         Eigen::Vector3f diffuse = I_r2.asDiagonal() * kd * std::max(0.0f, normal.dot(l));    // 漫反射
         Eigen::Vector3f specular = I_r2.asDiagonal() * ks * std::pow(std::max(0.0f, normal.dot(h)), p);  // 高光
-        Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
 
-        result_color = diffuse + specular + ambient;
+        result_color += diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -178,6 +184,8 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload& payload)
     Eigen::Vector3f normal = payload.normal;
 
     Eigen::Vector3f result_color = {0, 0, 0};
+    Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
+    result_color += ambient;
     for (auto& light : lights)
     {
         // For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
@@ -190,9 +198,8 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload& payload)
 
         Eigen::Vector3f diffuse = I_r2.asDiagonal() * kd * std::max(0.0f, normal.dot(l));    // 漫反射
         Eigen::Vector3f specular = I_r2.asDiagonal() * ks * std::pow(std::max(0.0f, normal.dot(h)), p);  // 高光
-        Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
 
-        result_color = diffuse + specular + ambient;
+        result_color += diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -252,7 +259,8 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload& payl
 
 
     Eigen::Vector3f result_color = {0, 0, 0};
-
+    Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
+    result_color += ambient;
     for (auto& light : lights)
     {
         // For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
@@ -266,9 +274,8 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload& payl
 
         Eigen::Vector3f diffuse = I_r2.asDiagonal() * kd * std::max(0.0f, normal.dot(l));    // 漫反射
         Eigen::Vector3f specular = I_r2.asDiagonal() * ks * std::pow(std::max(0.0f, normal.dot(h)), p);  // 高光
-        Eigen::Vector3f ambient = amb_light_intensity.asDiagonal() * ka;
 
-        result_color = diffuse + specular + ambient;
+        result_color += diffuse + specular;
     }
 
     return result_color * 255.f;

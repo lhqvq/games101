@@ -67,7 +67,13 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     orth = orth_scale * orth_translate;
     projection = orth * persp2orth;
 
-    return projection;
+    Eigen::Matrix4f mirror;
+    mirror << -1, 0, 0, 0,
+              0, -1, 0, 0,
+              0, 0, 1, 0,
+              0, 0, 0, 1;
+
+    return mirror * projection;
 }
 
 Eigen::Matrix4f get_rotation(Vector3f axis, float angle) {
