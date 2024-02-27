@@ -42,11 +42,11 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 
 static bool insideTriangle(float x, float y, const Vector3f* _v)
 {   
-    // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+    // Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
     Eigen::Vector3f ab, bc, ca;
-    ab = _v[0] - _v[1];
-    bc = _v[1] - _v[2];
-    ca = _v[2] - _v[0];
+    ab = _v[1] - _v[0];
+    bc = _v[2] - _v[1];
+    ca = _v[0] - _v[2];
     Eigen::Vector3f p;
     p << x, y, 1;
     Eigen::Vector3f ap, bp, cp;
@@ -147,6 +147,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 auto ind = get_index(x, y);
                 if (z_interpolated < depth_buf[ind]) {
                     set_pixel(cur_point, t.getColor());
+                    depth_buf[ind] = z_interpolated;
                 }
             }
         }
